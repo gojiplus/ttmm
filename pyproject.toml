@@ -22,3 +22,7 @@ test = ["pytest"]
 
 [project.scripts]
 ttmm = "ttmm.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["ttmm*"]
+exclude = ["app*"]
