@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ttmm"
+version = "0.1.0"
+description = "Time‑to‑Mental‑Model: a local‑first code reading assistant (Phase A)"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    { name = "Gaurav Sood", email = "contact@gsood.com" }
+]
+
+# core dependencies – pure standard library so far
+dependencies = []
+
+[project.optional-dependencies]
+# extras for the Streamlit UI and testing
+ui = ["streamlit>=1.23"]
+test = ["pytest"]
+
+[project.scripts]
+ttmm = "ttmm.cli:main"
