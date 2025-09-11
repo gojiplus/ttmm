@@ -316,8 +316,11 @@ with st.expander("OpenAI Integration (Optional)", expanded=False):
                         for row in hotspots[:5]:
                             entry = f"- {row['qualname']} ({row['file_path']}:{row['lineno']})"
                             entry += f" - complexity: {row['complexity']:.1f}"
-                            if row.get('churn'):
-                                entry += f", churn: {row['churn']:.3f}"
+                            try:
+                                if row['churn'] is not None:
+                                    entry += f", churn: {row['churn']:.3f}"
+                            except (KeyError, IndexError):
+                                pass
                             hotspot_context.append(entry)
 
                         repo_info = gitingest.get_repo_info(st.session_state.current_repo_path)
