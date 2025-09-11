@@ -4,12 +4,26 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ttmm"
-version = "0.1.0"
+version = "0.1.1"
 description = "Time‑to‑Mental‑Model: a local‑first code reading assistant (Phase A)"
 readme = "README.md"
-requires-python = ">=3.8,!=3.9.7"
+requires-python = ">=3.10"
 authors = [
     { name = "Gaurav Sood", email = "contact@gsood.com" }
+]
+license = "MIT"
+keywords = ["code-analysis", "static-analysis", "code-reading", "python", "ast"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Code Generators",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Utilities",
 ]
 
 # core dependencies – pure standard library so far

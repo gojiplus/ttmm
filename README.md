@@ -20,7 +20,13 @@ Requirements:
 * Python 3.8 or later (except 3.9.7 due to Streamlit compatibility)
 * A `git` executable in your `PATH` if you want churn‑based hotspot scores
 
-Install the package in editable mode from this repository:
+Install from PyPI:
+
+```bash
+pip install ttmm
+```
+
+Or install in development mode from this repository:
 
 ```bash
 pip install -e .
@@ -28,14 +34,14 @@ pip install -e .
 
 To enable optional extras:
 
-* `.[ui]` – install `streamlit` and `openai` for the web UI with AI features
-* `.[test]` – install `pytest` for running the test suite  
-* `.[ai]` – install `openai` for AI-enhanced analysis
+* `[ui]` – install `streamlit` and `openai` for the web UI with AI features
+* `[test]` – install `pytest` for running the test suite  
+* `[ai]` – install `openai` for AI-enhanced analysis
 
 For example:
 
 ```bash
-pip install -e .[ui,test]
+pip install ttmm[ui,test]
 ```
 
 ## Command line usage
