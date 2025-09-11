@@ -27,5 +27,6 @@ __all__ = [
     "gitutils",
     "trace",
     "search",
+    "gitingest",
     "cli",
 ]

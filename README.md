@@ -2,9 +2,12 @@
 
 `ttmm` is a local‑first code reading assistant designed to reduce the time it takes to load a mental model of a codebase.  It provides static indexing, simple call graph navigation, hotspot detection and dynamic tracing.  You can use it either from the command line or through a Streamlit web UI.
 
+**New**: `ttmm` now supports remote repositories via Git URLs and GitIngest integration, making it easy to analyze any public Python repository without cloning manually.
+
 ## Key features (Phase A)
 
 * **Index your repository** – builds a lightweight SQLite database of all Python functions/methods, their definitions, references and coarse call edges using only the standard library.
+* **Remote repository support** – analyze any GitHub, GitLab, or Bitbucket repository directly via URL or GitIngest links without manual cloning.
 * **Hotspot detection** – computes a hotspot score by combining cyclomatic complexity and recent git churn to help you prioritise where to read first.
 * **Static call graph navigation** – shows callers and callees for any symbol using conservative AST analysis.  Attribute calls that cannot be resolved are marked as `<unresolved>`.
 * **Keyword search** – a tiny TF‑IDF engine lets you ask a natural language question and returns a minimal reading set of relevant symbols.
@@ -39,20 +42,62 @@ pip install -e .[ui,test]
 After installation a `ttmm` command will be available:
 
 ```bash
-ttmm index PATH        # index a Python repository
-ttmm hotspots PATH     # show the top hotspots (default 10)
+ttmm index PATH_OR_URL        # index a Python repository (local or remote)
+ttmm hotspots PATH            # show the top hotspots (default 10)
 ttmm callers PATH SYMBOL
 ttmm callees PATH SYMBOL
 ttmm trace PATH [--module pkg.mod:func | --script file.py] [-- args...]
 ttmm answer PATH "your question"
 ```
 
-* **PATH** – either the root of a git repository or any folder containing Python code.  A `.ttmm` directory will be created inside with the database.
+* **PATH_OR_URL** – local repository path, Git URL, or GitIngest URL
+* **PATH** – local repository path that has been indexed previously
 * **SYMBOL** – a fully‑qualified name like `package.module:Class.method` or `package.module:function`.
 * **--module** – run a function or module entry point (e.g. `package.module:main`) and trace calls within the repository.
 * **--script** – run an arbitrary Python script in the repository and trace calls.
 
 Use `ttmm --help` for full documentation.
+
+## Examples
+
+Here are some examples analyzing popular Python repositories:
+
+### Analyze the Python requests library
+```bash
+# Index directly from GitHub
+ttmm index https://github.com/psf/requests.git
+
+# Find hotspots (complex functions with high churn)
+ttmm hotspots /tmp/ttmm_repo_*/
+# Output: PreparedRequest.prepare_body, super_len, RequestEncodingMixin._encode_files
+
+# Ask natural language questions  
+ttmm answer /tmp/ttmm_repo_*/ "how to make HTTP requests"
+# Output: HTTPAdapter.send, Session.request, HTTPAdapter.cert_verify
+```
+
+### Analyze a mathematical optimization library
+```bash  
+# Index a specialized repo via GitIngest URL
+ttmm index "https://gitingest.com/?url=https://github.com/finite-sample/rank_preserving_calibration"
+
+# Find the main algorithmic components
+ttmm answer /tmp/ttmm_repo_*/ "main calibration algorithm"
+# Output: calibrate_dykstra, calibrate_admm, _isotonic_regression
+
+# Explore function relationships
+ttmm callers /tmp/ttmm_repo_*/ "calibrate_dykstra"  
+# Shows all the places this core algorithm is used
+```
+
+### Analyze FastAPI core (subpath example)
+```bash
+# Index just the FastAPI core module using GitIngest subpath
+ttmm index "https://gitingest.com/?url=https://github.com/tiangolo/fastapi&subpath=fastapi"
+
+# Find entry points and main interfaces
+ttmm answer /tmp/ttmm_repo_*/ "main application interface"
+```
 
 ## Streamlit UI
 

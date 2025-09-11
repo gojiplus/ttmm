@@ -32,7 +32,7 @@ def create_sample_repo(tmp_path) -> str:
     alpha = textwrap.dedent(
         """
         def foo():
-            """Foo does something and calls bar."""
+            '''Foo does something and calls bar.'''
             bar()
 
         def bar():

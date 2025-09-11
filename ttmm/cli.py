@@ -12,16 +12,31 @@ import argparse
 import sys
 from typing import List
 
-from . import index, store, trace, search
+from . import index, store, trace, search, gitingest
 
 
 def do_index(args: argparse.Namespace) -> None:
-    index.index_repo(args.path)
-    print(f"Indexed repository {args.path}")
+    repo_path = _resolve_repo_path(args.path)
+    if repo_path is None:
+        print(f"Failed to fetch repository: {args.path}")
+        sys.exit(1)
+    
+    try:
+        index.index_repo(repo_path)
+        print(f"Indexed repository {args.path}")
+    finally:
+        # Clean up temp directory if it was a remote fetch
+        if repo_path != args.path and repo_path.startswith('/tmp'):
+            gitingest.cleanup_temp_repo(repo_path)
 
 
 def do_hotspots(args: argparse.Namespace) -> None:
-    conn = store.connect(args.path)
+    repo_path = _resolve_repo_path(args.path, temp_ok=False)
+    if repo_path is None:
+        print(f"Repository not found or not indexed: {args.path}")
+        sys.exit(1)
+    
+    conn = store.connect(repo_path)
     try:
         rows = store.get_hotspots(conn, limit=args.limit)
         if not rows:
@@ -38,7 +53,12 @@ def do_hotspots(args: argparse.Namespace) -> None:
 
 
 def do_callers(args: argparse.Namespace) -> None:
-    conn = store.connect(args.path)
+    repo_path = _resolve_repo_path(args.path, temp_ok=False)
+    if repo_path is None:
+        print(f"Repository not found or not indexed: {args.path}")
+        sys.exit(1)
+    
+    conn = store.connect(repo_path)
     try:
         sid = store.resolve_symbol(conn, args.symbol)
         if sid is None:
@@ -55,7 +75,12 @@ def do_callers(args: argparse.Namespace) -> None:
 
 
 def do_callees(args: argparse.Namespace) -> None:
-    conn = store.connect(args.path)
+    repo_path = _resolve_repo_path(args.path, temp_ok=False)
+    if repo_path is None:
+        print(f"Repository not found or not indexed: {args.path}")
+        sys.exit(1)
+    
+    conn = store.connect(repo_path)
     try:
         sid = store.resolve_symbol(conn, args.symbol)
         if sid is None:
@@ -74,14 +99,24 @@ def do_callees(args: argparse.Namespace) -> None:
 
 
 def do_trace(args: argparse.Namespace) -> None:
+    repo_path = _resolve_repo_path(args.path, temp_ok=False)
+    if repo_path is None:
+        print(f"Repository not found or not indexed: {args.path}")
+        sys.exit(1)
+    
     # Flatten args after '--'
     target_args: List[str] = args.args if hasattr(args, "args") else []
-    trace.run_tracing(args.path, module=args.module, script=args.script, args=target_args)
+    trace.run_tracing(repo_path, module=args.module, script=args.script, args=target_args)
     print("Trace completed")
 
 
 def do_answer(args: argparse.Namespace) -> None:
-    results = search.answer_question(args.path, args.question, top=args.limit, include_scores=True)
+    repo_path = _resolve_repo_path(args.path, temp_ok=False)
+    if repo_path is None:
+        print(f"Repository not found or not indexed: {args.path}")
+        sys.exit(1)
+    
+    results = search.answer_question(repo_path, args.question, top=args.limit, include_scores=True)
     if not results:
         print("No relevant symbols found.")
     else:
@@ -89,12 +124,43 @@ def do_answer(args: argparse.Namespace) -> None:
             print(f"{qualname} ({path}:{lineno}) – score={score:.2f}")
 
 
+def _resolve_repo_path(path_or_url: str, temp_ok: bool = True) -> str | None:
+    """Resolve a path or URL to a local repository path.
+    
+    For URLs, fetches the repository. For local paths, validates existence.
+    
+    Parameters
+    ----------
+    path_or_url : str
+        Local path, Git URL, or GitIngest URL
+    temp_ok : bool
+        Whether to allow temporary directory creation for remote repos
+        
+    Returns
+    -------
+    str or None
+        Local path to repository, or None if resolution failed
+    """
+    import os
+    
+    # If it's a local path that exists, return it
+    if os.path.exists(path_or_url):
+        return os.path.abspath(path_or_url)
+    
+    # If temp directories are not allowed, only work with local paths
+    if not temp_ok:
+        return None
+    
+    # Try to fetch as a remote repository
+    return gitingest.fetch_repository(path_or_url)
+
+
 def main(argv: List[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="ttmm", description="Time‑to‑Mental‑Model code reading assistant")
     sub = parser.add_subparsers(dest="command", required=True)
     # index
     p_index = sub.add_parser("index", help="Index a Python repository")
-    p_index.add_argument("path", help="Path to repository")
+    p_index.add_argument("path", help="Path, Git URL, or GitIngest URL of repository")
     p_index.set_defaults(func=do_index)
     # hotspots
     p_hot = sub.add_parser("hotspots", help="Show hottest functions/methods")

@@ -19,6 +19,8 @@ dependencies = []
 # extras for the Streamlit UI and testing
 ui = ["streamlit>=1.23"]
 test = ["pytest"]
+ai = ["openai>=1.0.0"]  # Future AI integration
+all = ["streamlit>=1.23", "pytest", "openai>=1.0.0"]
 
 [project.scripts]
 ttmm = "ttmm.cli:main"
