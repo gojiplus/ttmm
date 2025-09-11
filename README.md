@@ -17,7 +17,7 @@
 
 Requirements:
 
-* Python 3.9 or later
+* Python 3.8 or later (except 3.9.7 due to Streamlit compatibility)
 * A `git` executable in your `PATH` if you want churn‑based hotspot scores
 
 Install the package in editable mode from this repository:
@@ -119,7 +119,7 @@ pip install -e .[test]
 pytest -q
 ```
 
-Continuous integration is configured via `.github/workflows/ci.yml` to run the test suite on Python 3.9 through 3.12.  If you fork this repository on GitHub the workflow will execute automatically.
+Continuous integration is configured via `.github/workflows/ci.yml` to run the test suite on Python 3.8 through 3.12.  If you fork this repository on GitHub the workflow will execute automatically.
 
 ## Limitations
 
