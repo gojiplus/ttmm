@@ -3,8 +3,8 @@ requires = ["setuptools>=65", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ttmm"
-version = "0.1.1"
+name = "zerottmm"
+version = "0.1.0"
 description = "Time‑to‑Mental‑Model: a local‑first code reading assistant (Phase A)"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -37,8 +37,8 @@ ai = ["openai>=1.0.0"]  # Future AI integration
 all = ["streamlit>=1.23", "pytest", "openai>=1.0.0"]
 
 [project.scripts]
-ttmm = "ttmm.cli:main"
+zerottmm = "zerottmm.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["ttmm*"]
+include = ["zerottmm*"]
 exclude = ["app*"]

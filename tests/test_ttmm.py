@@ -15,9 +15,9 @@ import textwrap
 
 import pytest
 
-from ttmm import index as ttmm_index
-from ttmm import store as ttmm_store
-from ttmm import search as ttmm_search
+from zerottmm import index as ttmm_index
+from zerottmm import store as ttmm_store
+from zerottmm import search as ttmm_search
 
 
 def create_sample_repo(tmp_path) -> str:

@@ -21,11 +21,11 @@ import traceback
 
 import streamlit as st
 
-from ttmm import index as ttmm_index
-from ttmm import store as ttmm_store
-from ttmm import search as ttmm_search
-from ttmm import gitingest
-from ttmm import ai_analysis
+from zerottmm import index as ttmm_index
+from zerottmm import store as ttmm_store
+from zerottmm import search as ttmm_search
+from zerottmm import gitingest
+from zerottmm import ai_analysis
 
 
 def _show_repository_summary(repo_path: str) -> None:

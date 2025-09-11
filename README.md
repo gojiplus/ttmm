@@ -23,7 +23,7 @@ Requirements:
 Install from PyPI:
 
 ```bash
-pip install ttmm
+pip install zerottmm
 ```
 
 Or install in development mode from this repository:
@@ -41,20 +41,20 @@ To enable optional extras:
 For example:
 
 ```bash
-pip install ttmm[ui,test]
+pip install zerottmm[ui,test]
 ```
 
 ## Command line usage
 
-After installation a `ttmm` command will be available:
+After installation a `zerottmm` command will be available:
 
 ```bash
-ttmm index PATH_OR_URL        # index a Python repository (local or remote)
-ttmm hotspots PATH            # show the top hotspots (default 10)
-ttmm callers PATH SYMBOL
-ttmm callees PATH SYMBOL
-ttmm trace PATH [--module pkg.mod:func | --script file.py] [-- args...]
-ttmm answer PATH "your question"
+zerottmm index PATH_OR_URL        # index a Python repository (local or remote)
+zerottmm hotspots PATH            # show the top hotspots (default 10)
+zerottmm callers PATH SYMBOL
+zerottmm callees PATH SYMBOL
+zerottmm trace PATH [--module pkg.mod:func | --script file.py] [-- args...]
+zerottmm answer PATH "your question"
 ```
 
 * **PATH_OR_URL** – local repository path, Git URL, or GitIngest URL
@@ -63,7 +63,7 @@ ttmm answer PATH "your question"
 * **--module** – run a function or module entry point (e.g. `package.module:main`) and trace calls within the repository.
 * **--script** – run an arbitrary Python script in the repository and trace calls.
 
-Use `ttmm --help` for full documentation.
+Use `zerottmm --help` for full documentation.
 
 ## Examples
 
@@ -72,38 +72,38 @@ Here are some examples analyzing popular Python repositories:
 ### Analyze the Python requests library
 ```bash
 # Index directly from GitHub
-ttmm index https://github.com/psf/requests.git
+zerottmm index https://github.com/psf/requests.git
 
 # Find hotspots (complex functions with high churn)
-ttmm hotspots /tmp/ttmm_repo_*/
+zerottmm hotspots /tmp/ttmm_repo_*/
 # Output: PreparedRequest.prepare_body, super_len, RequestEncodingMixin._encode_files
 
 # Ask natural language questions  
-ttmm answer /tmp/ttmm_repo_*/ "how to make HTTP requests"
+zerottmm answer /tmp/ttmm_repo_*/ "how to make HTTP requests"
 # Output: HTTPAdapter.send, Session.request, HTTPAdapter.cert_verify
 ```
 
 ### Analyze a mathematical optimization library
 ```bash  
 # Index a specialized repo via GitIngest URL
-ttmm index "https://gitingest.com/?url=https://github.com/finite-sample/rank_preserving_calibration"
+zerottmm index "https://gitingest.com/?url=https://github.com/finite-sample/rank_preserving_calibration"
 
 # Find the main algorithmic components
-ttmm answer /tmp/ttmm_repo_*/ "main calibration algorithm"
+zerottmm answer /tmp/ttmm_repo_*/ "main calibration algorithm"
 # Output: calibrate_dykstra, calibrate_admm, _isotonic_regression
 
 # Explore function relationships
-ttmm callers /tmp/ttmm_repo_*/ "calibrate_dykstra"  
+zerottmm callers /tmp/ttmm_repo_*/ "calibrate_dykstra"  
 # Shows all the places this core algorithm is used
 ```
 
 ### Analyze FastAPI core (subpath example)
 ```bash
 # Index just the FastAPI core module using GitIngest subpath
-ttmm index "https://gitingest.com/?url=https://github.com/tiangolo/fastapi&subpath=fastapi"
+zerottmm index "https://gitingest.com/?url=https://github.com/tiangolo/fastapi&subpath=fastapi"
 
 # Find entry points and main interfaces
-ttmm answer /tmp/ttmm_repo_*/ "main application interface"
+zerottmm answer /tmp/ttmm_repo_*/ "main application interface"
 ```
 
 ## Streamlit UI
