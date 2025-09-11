@@ -25,6 +25,7 @@ from ttmm import index as ttmm_index
 from ttmm import store as ttmm_store
 from ttmm import search as ttmm_search
 from ttmm import gitingest
+from ttmm import ai_analysis
 
 
 st.set_page_config(page_title="TTMM Assistant", layout="wide")
@@ -95,7 +96,9 @@ if st.button("Index repository"):
                     if repo_info.get('remote_url'):
                         st.success(f"✅ Indexed remote repository: {repo_info['remote_url']}")
                         if repo_info.get('commit'):
-                            st.info(f"📝 Commit: {repo_info['commit']} | Branch: {repo_info.get('branch', 'unknown')}")
+                            commit_info = f"📝 Commit: {repo_info['commit']}"
+                            branch_info = f"Branch: {repo_info.get('branch', 'unknown')}"
+                            st.info(f"{commit_info} | {branch_info}")
                     else:
                         st.success(f"✅ Indexed repository: {repo_input}")
                 else:
@@ -149,7 +152,13 @@ with st.expander("OpenAI Integration (Optional)", expanded=False):
     )
 
     if openai_key:
-        st.success("✅ OpenAI API key configured")
+        # Test the API key
+        is_valid, message = ai_analysis.test_openai_connection(openai_key)
+        if is_valid:
+            st.success("✅ OpenAI API key configured and validated")
+        else:
+            st.error(f"❌ API key validation failed: {message}")
+            openai_key = None  # Disable further processing
 
         ai_query_type = st.selectbox(
             "Analysis Type",
@@ -162,13 +171,15 @@ with st.expander("OpenAI Integration (Optional)", expanded=False):
             ]
         )
 
+        custom_prompt = None
         if ai_query_type == "Custom analysis":
             custom_prompt = st.text_area(
                 "Custom Analysis Request",
-                placeholder="e.g., 'Explain the main data flow in this codebase' or 'What are the key security considerations?'"
+                placeholder="e.g., 'Explain the main data flow in this codebase' or "
+                            "'What are the key security considerations?'"
             )
 
-        if st.button("🚀 Run AI Analysis"):
+        if st.button("🚀 Run AI Analysis") and openai_key:
             if st.session_state.current_repo_path is None:
                 st.warning("Please index a repository first.")
             else:
@@ -182,37 +193,33 @@ with st.expander("OpenAI Integration (Optional)", expanded=False):
                         # Prepare context for AI
                         hotspot_context = []
                         for row in hotspots[:5]:
-                            hotspot_context.append(f"- {row['qualname']} ({row['file_path']}:{row['lineno']}) - complexity: {row['complexity']:.1f}")
+                            entry = f"- {row['qualname']} ({row['file_path']}:{row['lineno']})"
+                            entry += f" - complexity: {row['complexity']:.1f}"
+                            if row.get('churn'):
+                                entry += f", churn: {row['churn']:.3f}"
+                            hotspot_context.append(entry)
 
-                        context = f"""
-Repository Analysis Context:
-Top 5 Hotspots (complex functions):
-{chr(10).join(hotspot_context)}
+                        repo_info = gitingest.get_repo_info(st.session_state.current_repo_path)
+                        
+                        # Get custom prompt if applicable
+                        custom_query = custom_prompt if ai_query_type == "Custom analysis" else None
 
-Repository Info: {gitingest.get_repo_info(st.session_state.current_repo_path)}
-"""
+                        # Run AI analysis
+                        analysis_result = ai_analysis.analyze_code_with_ai(
+                            api_key=openai_key,
+                            analysis_type=ai_query_type,
+                            hotspots_context=hotspot_context,
+                            repo_info=repo_info,
+                            custom_prompt=custom_query
+                        )
 
-                        # For now, show what would be sent to OpenAI
-                        st.info("🔧 **OpenAI Integration Coming Soon**")
-                        st.markdown("**Context that would be sent to AI:**")
-                        st.code(context)
-
-                        if ai_query_type == "Custom analysis" and custom_prompt:
-                            st.markdown("**Custom prompt:**")
-                            st.write(custom_prompt)
-                        else:
-                            st.markdown(f"**Analysis type:** {ai_query_type}")
-
-                        st.markdown("""
-**Next Steps:**
-- Install OpenAI Python library: `pip install openai`
-- Add AI analysis module to ttmm package
-- Implement structured prompts for different analysis types
-- Add streaming responses for better UX
-                        """)
+                        # Display results
+                        st.markdown("### 🤖 AI Analysis Results")
+                        st.markdown(analysis_result)
 
                 except Exception as e:
                     st.error(f"AI analysis failed: {e}")
+                    st.text(traceback.format_exc())
     else:
         st.info("💡 Add your OpenAI API key above to unlock AI-powered code analysis")
 
@@ -229,7 +236,9 @@ if st.button("Answer"):
             st.warning("Please index a repository first.")
         else:
             try:
-                results = ttmm_search.answer_question(st.session_state.current_repo_path, query, top=topk, include_scores=True)
+                results = ttmm_search.answer_question(
+                    st.session_state.current_repo_path, query, top=topk, include_scores=True
+                )
                 if results:
                     table = []
                     for qualname, path, lineno, score in results:
@@ -240,7 +249,8 @@ if st.button("Answer"):
                         })
                     st.dataframe(table)
                 else:
-                    st.info("No relevant symbols found; try a different query or re‑index the repository.")
+                    st.info("No relevant symbols found; try a different query or "
+                            "re‑index the repository.")
             except Exception as e:
                 st.error(f"Search failed: {e}")
                 st.text(traceback.format_exc())
@@ -251,7 +261,8 @@ st.markdown("### 🗂️ Session Info")
 if st.session_state.current_repo_path:
     if st.session_state.current_repo_path.startswith(tempfile.gettempdir()):
         st.info(f"📁 **Temporary repository:** {st.session_state.current_repo_path}")
-        st.caption("This repository was downloaded temporarily and will be cleaned up when you close the session.")
+        st.caption("This repository was downloaded temporarily and will be "
+                   "cleaned up when you close the session.")
     else:
         st.info(f"📁 **Local repository:** {st.session_state.current_repo_path}")
 

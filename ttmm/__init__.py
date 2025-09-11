@@ -1,6 +1,9 @@
 """Top‑level package for ttmm.
 
-`ttmm` (Time‑to‑Mental‑Model) helps you build a mental model of a Python codebase faster.  It can index a repository, compute hotspots, navigate static call graphs, run dynamic traces and answer natural language questions about your code.  The core functionality lives in submodules:
+`ttmm` (Time‑to‑Mental‑Model) helps you build a mental model of a Python codebase
+faster.  It can index a repository, compute hotspots, navigate static call graphs,
+run dynamic traces and answer natural language questions about your code.  The core
+functionality lives in submodules:
 
 * `ttmm.index` – parse and index a Python repository
 * `ttmm.store` – SQLite persistence layer
@@ -10,7 +13,9 @@
 * `ttmm.search` – tiny TF‑IDF search over your codebase
 * `ttmm.cli` – command line entry point
 
-Importing this package will expose the `__version__` attribute.  For most use cases you should call into `ttmm.cli` via the `ttmm` command line, or import functions from the specific submodules.
+Importing this package will expose the `__version__` attribute.  For most use cases
+you should call into `ttmm.cli` via the `ttmm` command line, or import functions
+from the specific submodules.
 """
 
 from importlib.metadata import version, PackageNotFoundError
@@ -28,5 +33,6 @@ __all__ = [
     "trace",
     "search",
     "gitingest",
+    "ai_analysis",
     "cli",
 ]

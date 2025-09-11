@@ -42,9 +42,7 @@ from __future__ import annotations
 
 import os
 import sqlite3
-import math
-from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 
 def get_db_path(repo_path: str) -> str:
@@ -253,12 +251,11 @@ def get_hotspots(conn: sqlite3.Connection, limit: int = 10) -> List[sqlite3.Row]
                symbols.lineno AS lineno,
                metrics.complexity AS complexity,
                metrics.churn AS churn,
-               metrics.loc AS loc,
-               metrics.complexity * (1.0 + sqrt(metrics.churn)) AS score
+               metrics.loc AS loc
         FROM symbols
         JOIN metrics ON metrics.symbol_id = symbols.id
         JOIN files ON files.id = symbols.file_id
-        ORDER BY score DESC
+        ORDER BY metrics.complexity DESC, metrics.churn DESC
         LIMIT ?
         """,
         (limit,),
@@ -288,10 +285,12 @@ def resolve_symbol(conn: sqlite3.Connection, name: str) -> Optional[int]:
         """
         SELECT symbols.id AS id,
                symbols.qualname AS qualname,
-               metrics.complexity * (1.0 + sqrt(metrics.churn)) AS score
+               metrics.complexity AS complexity,
+               metrics.churn AS churn
         FROM symbols
         JOIN metrics ON metrics.symbol_id = symbols.id
         WHERE symbols.qualname LIKE '%' || ?
+        ORDER BY metrics.complexity DESC, metrics.churn DESC
         """,
         (":" + name,)  # match ':name' anywhere
     )
@@ -302,18 +301,21 @@ def resolve_symbol(conn: sqlite3.Connection, name: str) -> Optional[int]:
             """
             SELECT symbols.id AS id,
                    symbols.qualname AS qualname,
-                   metrics.complexity * (1.0 + sqrt(metrics.churn)) AS score
+                   metrics.complexity AS complexity,
+                   metrics.churn AS churn
             FROM symbols
             JOIN metrics ON metrics.symbol_id = symbols.id
             WHERE symbols.qualname LIKE '%' || ?
+            ORDER BY metrics.complexity DESC, metrics.churn DESC
             """,
             ("." + name,),
         )
         candidates = cur.fetchall()
     if not candidates:
         return None
-    # Choose candidate with highest score
-    best = max(candidates, key=lambda r: r["score"])
+    # Choose candidate with highest complexity, then churn
+    import math
+    best = max(candidates, key=lambda r: r["complexity"] * (1.0 + math.sqrt(r["churn"])))
     return best["id"]
 
 
