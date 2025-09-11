@@ -117,7 +117,7 @@ The app allows you to index repositories (local or remote via GitIngest), explor
 * **Hotspot detection** and complexity analysis
 * **Natural language search** over code symbols
 
-The app is designed to run on [Streamlit Community Cloud](https://streamlit.io/cloud) – simply push this repository to GitHub and deploy the app by pointing to `app/app.py`.
+The app is designed to run on [Streamlit Community Cloud](https://streamlit.io/cloud) – simply push this repository to GitHub and deploy the app by pointing to `app/app.py`. The `requirements.txt` file ensures all dependencies (including OpenAI) are automatically installed.
 
 ## Development & tests
 
