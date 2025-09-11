@@ -1,4 +1,4 @@
-# ttmm: Time‑to‑Mental‑Model
+# zerottmm: Zero Time‑to‑Mental‑Model
 
 `ttmm` is a local‑first code reading assistant designed to reduce the time it takes to load a mental model of a codebase.  It provides static indexing, simple call graph navigation, hotspot detection and dynamic tracing.  You can use it either from the command line or through a Streamlit web UI.
 
