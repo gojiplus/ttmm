@@ -23,7 +23,6 @@ from __future__ import annotations
 
 import ast
 import os
-import time
 from typing import Dict, List, Tuple
 
 from . import metrics, gitutils, store
@@ -119,6 +118,7 @@ def index_repo(repo_path: str) -> None:
                     churn = churn_by_file.get(rel_path, 0.0)
                     metrics_data[qualname] = (comp, loc, churn)
                     # Collect calls
+
                     class CallVisitor(ast.NodeVisitor):
                         def visit_Call(self, call: ast.Call) -> None:
                             callee_name: str | None = None

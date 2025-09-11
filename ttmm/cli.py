@@ -184,10 +184,14 @@ def main(argv: List[str] | None = None) -> None:
     p_callees.add_argument("symbol", help="Fully qualified or simple symbol name")
     p_callees.set_defaults(func=do_callees)
     # trace
-    p_trace = sub.add_parser("trace", help="Trace runtime execution of a module function or script")
+    p_trace = sub.add_parser(
+        "trace", help="Trace runtime execution of a module function or script"
+    )
     p_trace.add_argument("path", help="Path to repository")
     group = p_trace.add_mutually_exclusive_group(required=True)
-    group.add_argument("--module", help="Module entry point in form pkg.module:func or pkg.module to run")
+    group.add_argument(
+        "--module", help="Module entry point in form pkg.module:func or pkg.module to run"
+    )
     group.add_argument("--script", help="Relative path to a Python script to run")
     p_trace.add_argument(
         "args", nargs=argparse.REMAINDER,

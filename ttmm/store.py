@@ -190,7 +190,8 @@ def insert_static_data(
     for sym in symbols_data:
         file_id = file_ids[sym["path"]]
         cur.execute(
-            "INSERT INTO symbols (file_id, qualname, lineno, endlineno, type, doc) VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO symbols (file_id, qualname, lineno, endlineno, type, doc) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
             (
                 file_id,
                 sym["qualname"],
@@ -213,7 +214,10 @@ def insert_static_data(
             continue  # skip unknown caller (should not happen)
         callee_name = call["callee_name"]
         # Attempt to resolve callee name among all symbols
-        callee_matches = [sid for qn, sid in sym_map.items() if qn.endswith(":" + callee_name) or qn.split(":")[-1].split(".")[-1] == callee_name]
+        callee_matches = [
+            sid for qn, sid in sym_map.items()
+            if qn.endswith(":" + callee_name) or qn.split(":")[-1].split(".")[-1] == callee_name
+        ]
         callee_id: Optional[int] = None
         unresolved = call.get("unresolved", False)
         if not unresolved and len(callee_matches) == 1:

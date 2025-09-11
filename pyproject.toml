@@ -17,7 +17,7 @@ dependencies = []
 
 [project.optional-dependencies]
 # extras for the Streamlit UI and testing
-ui = ["streamlit>=1.23"]
+ui = ["streamlit>=1.23", "openai>=1.0.0"]  # Include OpenAI for UI
 test = ["pytest"]
 ai = ["openai>=1.0.0"]  # Future AI integration
 all = ["streamlit>=1.23", "pytest", "openai>=1.0.0"]

@@ -28,6 +28,106 @@ from ttmm import gitingest
 from ttmm import ai_analysis
 
 
+def _show_repository_summary(repo_path: str) -> None:
+    """Display an automatic repository summary."""
+    import math
+    try:
+        # Get repository basic info
+        repo_info = gitingest.get_repo_info(repo_path)
+
+        # Get database statistics
+        conn = ttmm_store.connect(repo_path)
+        cur = conn.cursor()
+
+        # Count files, symbols, and get top complexity functions
+        cur.execute("SELECT COUNT(*) FROM files")
+        file_count = cur.fetchone()[0]
+
+        cur.execute("SELECT COUNT(*) FROM symbols")
+        symbol_count = cur.fetchone()[0]
+
+        cur.execute("SELECT COUNT(*) FROM symbols WHERE type = 'function'")
+        function_count = cur.fetchone()[0]
+
+        cur.execute("SELECT COUNT(*) FROM symbols WHERE type = 'method'")
+        method_count = cur.fetchone()[0]
+
+        # Get top 3 hotspots for preview
+        hotspots = ttmm_store.get_hotspots(conn, limit=3)
+        ttmm_store.close(conn)
+
+        # Display basic stats
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("📁 Python Files", file_count)
+        with col2:
+            st.metric("🔧 Functions", function_count)
+        with col3:
+            st.metric("⚙️ Methods", method_count)
+        with col4:
+            st.metric("📊 Total Symbols", symbol_count)
+
+        # Repository info
+        if repo_info.get('remote_url'):
+            st.markdown(f"**Repository:** {repo_info['remote_url']}")
+            if repo_info.get('branch') and repo_info.get('commit'):
+                branch_commit = f"**Branch:** {repo_info['branch']} | "
+                branch_commit += f"**Commit:** {repo_info['commit']}"
+                st.markdown(branch_commit)
+
+        # Top complexity preview
+        if hotspots:
+            st.markdown("**🔥 Top Complexity Hotspots:**")
+            for i, row in enumerate(hotspots, 1):
+                score = row["complexity"] * (1.0 + math.sqrt(row["churn"] or 0))
+                hotspot_info = f"{i}. `{row['qualname']}` "
+                hotspot_info += f"({row['file_path']}:{row['lineno']}) - "
+                hotspot_info += f"complexity: {row['complexity']:.1f}, score: {score:.1f}"
+                st.markdown(hotspot_info)
+
+        # Basic analysis without OpenAI
+        st.markdown("**📋 Quick Analysis:**")
+
+        # Function vs method ratio analysis
+        if symbol_count > 0:
+            method_ratio = method_count / symbol_count
+            if method_ratio > 0.6:
+                analysis = "• **Object-oriented codebase** - High proportion of class methods"
+                st.markdown(analysis)
+            elif method_ratio < 0.3:
+                st.markdown("• **Functional codebase** - Mostly standalone functions")
+            else:
+                analysis = "• **Mixed paradigm codebase** - Balance of functions and methods"
+                st.markdown(analysis)
+
+        # Complexity analysis
+        if hotspots:
+            avg_complexity = sum(row["complexity"] for row in hotspots) / len(hotspots)
+            if avg_complexity > 10:
+                analysis = "• **High complexity detected** - Consider refactoring top hotspots"
+                st.markdown(analysis)
+            elif avg_complexity > 5:
+                analysis = "• **Moderate complexity** - Some functions may benefit from "
+                analysis += "simplification"
+                st.markdown(analysis)
+            else:
+                st.markdown("• **Low complexity** - Well-structured, readable code")
+
+        # File organization
+        if file_count > 20:
+            analysis = "• **Large codebase** - Consider using call graph navigation for "
+            analysis += "exploration"
+            st.markdown(analysis)
+        elif file_count > 5:
+            st.markdown("• **Medium codebase** - Good size for comprehensive analysis")
+        else:
+            st.markdown("• **Small codebase** - Easy to navigate and understand")
+
+    except Exception as e:
+        st.error(f"Failed to generate summary: {e}")
+        st.text(traceback.format_exc())
+
+
 st.set_page_config(page_title="TTMM Assistant", layout="wide")
 st.title("🧠 TTMM Code Reading Assistant")
 st.markdown("*Analyze Python codebases from local paths, Git URLs, or GitIngest links*")
@@ -104,9 +204,23 @@ if st.button("Index repository"):
                 else:
                     st.success(f"✅ Indexed local repository: {repo_input}")
 
+                # Generate and show repository summary
+                _show_repository_summary(actual_repo_path)
+
         except Exception as e:
             st.error(f"Indexing failed: {e}")
             st.text(traceback.format_exc())
+
+st.markdown("---")
+
+# Repository Summary Section
+if st.session_state.current_repo_path:
+    st.subheader("📊 Repository Summary")
+    if st.button("🔄 Refresh Summary"):
+        _show_repository_summary(st.session_state.current_repo_path)
+    else:
+        # Show summary for already indexed repo
+        _show_repository_summary(st.session_state.current_repo_path)
 
 st.markdown("---")
 
@@ -156,28 +270,35 @@ with st.expander("OpenAI Integration (Optional)", expanded=False):
         is_valid, message = ai_analysis.test_openai_connection(openai_key)
         if is_valid:
             st.success("✅ OpenAI API key configured and validated")
+        elif "not installed" in message.lower():
+            st.warning("⚠️ OpenAI library not installed. Install with: `pip install openai`")
+            st.info("💡 You can still use the basic repository analysis features without OpenAI")
+            openai_key = None  # Disable further processing
         else:
             st.error(f"❌ API key validation failed: {message}")
             openai_key = None  # Disable further processing
 
-        ai_query_type = st.selectbox(
-            "Analysis Type",
-            [
-                "Explain hotspots",
-                "Summarize architecture",
-                "Identify design patterns",
-                "Find potential issues",
-                "Custom analysis"
-            ]
-        )
-
+        ai_query_type = None
         custom_prompt = None
-        if ai_query_type == "Custom analysis":
-            custom_prompt = st.text_area(
-                "Custom Analysis Request",
-                placeholder="e.g., 'Explain the main data flow in this codebase' or "
-                            "'What are the key security considerations?'"
+
+        if openai_key:
+            ai_query_type = st.selectbox(
+                "Analysis Type",
+                [
+                    "Explain hotspots",
+                    "Summarize architecture",
+                    "Identify design patterns",
+                    "Find potential issues",
+                    "Custom analysis"
+                ]
             )
+
+            if ai_query_type == "Custom analysis":
+                custom_prompt = st.text_area(
+                    "Custom Analysis Request",
+                    placeholder="e.g., 'Explain the main data flow in this codebase' or "
+                                "'What are the key security considerations?'"
+                )
 
         if st.button("🚀 Run AI Analysis") and openai_key:
             if st.session_state.current_repo_path is None:
@@ -200,7 +321,7 @@ with st.expander("OpenAI Integration (Optional)", expanded=False):
                             hotspot_context.append(entry)
 
                         repo_info = gitingest.get_repo_info(st.session_state.current_repo_path)
-                        
+
                         # Get custom prompt if applicable
                         custom_query = custom_prompt if ai_query_type == "Custom analysis" else None
 

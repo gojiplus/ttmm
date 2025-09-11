@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import re
 import math
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple
 
 from . import store
 

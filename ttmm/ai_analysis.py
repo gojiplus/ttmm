@@ -7,7 +7,6 @@ about their codebases using OpenAI's GPT models.
 
 from __future__ import annotations
 
-import os
 from typing import Dict, List, Optional
 
 
@@ -19,7 +18,7 @@ def analyze_code_with_ai(
     custom_prompt: Optional[str] = None,
 ) -> str:
     """Analyze code using OpenAI API.
-    
+
     Parameters
     ----------
     api_key : str
@@ -32,7 +31,7 @@ def analyze_code_with_ai(
         Repository metadata
     custom_prompt : str, optional
         Custom analysis prompt
-        
+
     Returns
     -------
     str
@@ -43,10 +42,10 @@ def analyze_code_with_ai(
     except ImportError:
         return ("❌ **OpenAI library not installed**\n\n"
                 "Please install it with: `pip install openai`")
-    
+
     # Set up OpenAI client
     client = openai.OpenAI(api_key=api_key)
-    
+
     # Prepare context
     repo_context = f"""
 Repository Information:
@@ -83,9 +82,9 @@ Top Code Hotspots (high complexity functions):
         ),
         "Custom analysis": custom_prompt or "Provide a general analysis of the codebase.",
     }
-    
+
     prompt = analysis_prompts.get(analysis_type, analysis_prompts["Custom analysis"])
-    
+
     try:
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -106,9 +105,9 @@ Top Code Hotspots (high complexity functions):
             max_tokens=1000,
             temperature=0.3,
         )
-        
+
         return response.choices[0].message.content or "No analysis generated."
-        
+
     except openai.OpenAIError as e:
         return f"❌ **OpenAI API Error**: {str(e)}"
     except Exception as e:
@@ -117,12 +116,12 @@ Top Code Hotspots (high complexity functions):
 
 def test_openai_connection(api_key: str) -> tuple[bool, str]:
     """Test if OpenAI API key is valid.
-    
+
     Parameters
     ----------
     api_key : str
         OpenAI API key to test
-        
+
     Returns
     -------
     tuple[bool, str]
@@ -132,11 +131,11 @@ def test_openai_connection(api_key: str) -> tuple[bool, str]:
         import openai
     except ImportError:
         return False, "OpenAI library not installed"
-    
+
     try:
         client = openai.OpenAI(api_key=api_key)
         # Make a minimal API call to test the key
-        response = client.chat.completions.create(
+        client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": "Hello"}],
             max_tokens=5

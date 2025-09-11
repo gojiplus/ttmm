@@ -10,7 +10,6 @@ reading order.  It does not require any third party dependencies.
 from __future__ import annotations
 
 import ast
-from typing import Tuple
 
 
 class ComplexityVisitor(ast.NodeVisitor):

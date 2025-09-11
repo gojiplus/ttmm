@@ -28,8 +28,9 @@ pip install -e .
 
 To enable optional extras:
 
-* `.[ui]` – install `streamlit` for the web UI
-* `.[test]` – install `pytest` for running the test suite
+* `.[ui]` – install `streamlit` and `openai` for the web UI with AI features
+* `.[test]` – install `pytest` for running the test suite  
+* `.[ai]` – install `openai` for AI-enhanced analysis
 
 For example:
 
@@ -108,7 +109,15 @@ pip install -e .[ui]
 streamlit run app/app.py
 ```
 
-The app allows you to index a repository, explore hotspots, ask a question and see the call graph interactively.  It is designed to run on [Streamlit Community Cloud](https://streamlit.io/cloud) – simply push this repository to GitHub and deploy the app by pointing to `app/app.py`.
+The app allows you to index repositories (local or remote via GitIngest), explore hotspots, get AI-powered insights, and search interactively. Features include:
+
+* **Repository indexing** from local paths, Git URLs, or GitIngest links
+* **Automatic repository summary** with key metrics and analysis
+* **AI-enhanced analysis** with OpenAI integration (optional)
+* **Hotspot detection** and complexity analysis
+* **Natural language search** over code symbols
+
+The app is designed to run on [Streamlit Community Cloud](https://streamlit.io/cloud) – simply push this repository to GitHub and deploy the app by pointing to `app/app.py`.
 
 ## Development & tests
 

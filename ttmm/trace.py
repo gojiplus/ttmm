@@ -52,7 +52,9 @@ def _build_symbol_intervals(conn, repo_path: str) -> Dict[str, List[Tuple[int, i
     return mapping
 
 
-def _lookup_symbol(symbol_intervals: Dict[str, List[Tuple[int, int, int]]], rel_path: str, lineno: int) -> Optional[int]:
+def _lookup_symbol(
+    symbol_intervals: Dict[str, List[Tuple[int, int, int]]], rel_path: str, lineno: int
+) -> Optional[int]:
     """Return the symbol id containing a given file/line position, or None."""
     intervals = symbol_intervals.get(rel_path)
     if not intervals:
