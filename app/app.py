@@ -256,96 +256,95 @@ st.markdown("---")
 
 # AI-Enhanced Analysis Section
 st.subheader("🤖 AI-Enhanced Analysis")
-with st.expander("OpenAI Integration (Optional)", expanded=True):
-    st.markdown("**Enhance your code analysis with AI-powered insights**")
+st.markdown("**Enhance your code analysis with AI-powered insights**")
 
-    openai_key = st.text_input(
-        "OpenAI API Key",
-        type="password",
-        help="Enter your OpenAI API key to get AI-powered code analysis and explanations"
-    )
+openai_key = st.text_input(
+    "OpenAI API Key",
+    type="password",
+    help="Enter your OpenAI API key to get AI-powered code analysis and explanations"
+)
+
+if openai_key:
+    # Test the API key
+    is_valid, message = ai_analysis.test_openai_connection(openai_key)
+    if is_valid:
+        st.success("✅ OpenAI API key configured and validated")
+    elif "not installed" in message.lower():
+        st.warning("⚠️ OpenAI library not installed. Install with: `pip install openai`")
+        st.info("💡 You can still use the basic repository analysis features without OpenAI")
+        openai_key = None  # Disable further processing
+    else:
+        st.error(f"❌ API key validation failed: {message}")
+        openai_key = None  # Disable further processing
+
+    ai_query_type = None
+    custom_prompt = None
 
     if openai_key:
-        # Test the API key
-        is_valid, message = ai_analysis.test_openai_connection(openai_key)
-        if is_valid:
-            st.success("✅ OpenAI API key configured and validated")
-        elif "not installed" in message.lower():
-            st.warning("⚠️ OpenAI library not installed. Install with: `pip install openai`")
-            st.info("💡 You can still use the basic repository analysis features without OpenAI")
-            openai_key = None  # Disable further processing
-        else:
-            st.error(f"❌ API key validation failed: {message}")
-            openai_key = None  # Disable further processing
+        ai_query_type = st.selectbox(
+            "Analysis Type",
+            [
+                "Explain hotspots",
+                "Summarize architecture",
+                "Identify design patterns",
+                "Find potential issues",
+                "Custom analysis"
+            ]
+        )
 
-        ai_query_type = None
-        custom_prompt = None
-
-        if openai_key:
-            ai_query_type = st.selectbox(
-                "Analysis Type",
-                [
-                    "Explain hotspots",
-                    "Summarize architecture",
-                    "Identify design patterns",
-                    "Find potential issues",
-                    "Custom analysis"
-                ]
+        if ai_query_type == "Custom analysis":
+            custom_prompt = st.text_area(
+                "Custom Analysis Request",
+                placeholder="e.g., 'Explain the main data flow in this codebase' or "
+                            "'What are the key security considerations?'"
             )
 
-            if ai_query_type == "Custom analysis":
-                custom_prompt = st.text_area(
-                    "Custom Analysis Request",
-                    placeholder="e.g., 'Explain the main data flow in this codebase' or "
-                                "'What are the key security considerations?'"
-                )
+    if st.button("🚀 Run AI Analysis") and openai_key:
+        if st.session_state.current_repo_path is None:
+            st.warning("Please index a repository first.")
+        else:
+            try:
+                with st.spinner("Running AI analysis..."):
+                    # Get top hotspots for context
+                    conn = ttmm_store.connect(st.session_state.current_repo_path)
+                    hotspots = ttmm_store.get_hotspots(conn, limit=10)
+                    ttmm_store.close(conn)
 
-        if st.button("🚀 Run AI Analysis") and openai_key:
-            if st.session_state.current_repo_path is None:
-                st.warning("Please index a repository first.")
-            else:
-                try:
-                    with st.spinner("Running AI analysis..."):
-                        # Get top hotspots for context
-                        conn = ttmm_store.connect(st.session_state.current_repo_path)
-                        hotspots = ttmm_store.get_hotspots(conn, limit=10)
-                        ttmm_store.close(conn)
+                    # Prepare context for AI
+                    hotspot_context = []
+                    for row in hotspots[:5]:
+                        entry = f"- {row['qualname']} ({row['file_path']}:{row['lineno']})"
+                        entry += f" - complexity: {row['complexity']:.1f}"
+                        try:
+                            if row['churn'] is not None:
+                                entry += f", churn: {row['churn']:.3f}"
+                        except (KeyError, IndexError):
+                            pass
+                        hotspot_context.append(entry)
 
-                        # Prepare context for AI
-                        hotspot_context = []
-                        for row in hotspots[:5]:
-                            entry = f"- {row['qualname']} ({row['file_path']}:{row['lineno']})"
-                            entry += f" - complexity: {row['complexity']:.1f}"
-                            try:
-                                if row['churn'] is not None:
-                                    entry += f", churn: {row['churn']:.3f}"
-                            except (KeyError, IndexError):
-                                pass
-                            hotspot_context.append(entry)
+                    repo_info = gitingest.get_repo_info(st.session_state.current_repo_path)
 
-                        repo_info = gitingest.get_repo_info(st.session_state.current_repo_path)
+                    # Get custom prompt if applicable
+                    custom_query = custom_prompt if ai_query_type == "Custom analysis" else None
 
-                        # Get custom prompt if applicable
-                        custom_query = custom_prompt if ai_query_type == "Custom analysis" else None
+                    # Run AI analysis
+                    analysis_result = ai_analysis.analyze_code_with_ai(
+                        api_key=openai_key,
+                        analysis_type=ai_query_type,
+                        hotspots_context=hotspot_context,
+                        repo_info=repo_info,
+                        custom_prompt=custom_query
+                    )
 
-                        # Run AI analysis
-                        analysis_result = ai_analysis.analyze_code_with_ai(
-                            api_key=openai_key,
-                            analysis_type=ai_query_type,
-                            hotspots_context=hotspot_context,
-                            repo_info=repo_info,
-                            custom_prompt=custom_query
-                        )
+                    # Display results
+                    st.markdown("### 🤖 AI Analysis Results")
+                    st.markdown(analysis_result)
 
-                        # Display results
-                        st.markdown("### 🤖 AI Analysis Results")
-                        st.markdown(analysis_result)
-
-                except Exception as e:
-                    st.error(f"AI analysis failed: {e}")
-                    st.text(traceback.format_exc())
-    else:
-        st.info("💡 Add your OpenAI API key above to unlock AI-powered code analysis")
+            except Exception as e:
+                st.error(f"AI analysis failed: {e}")
+                st.text(traceback.format_exc())
+else:
+    st.info("💡 Add your OpenAI API key above to unlock AI-powered code analysis")
 
 st.markdown("---")
 
