@@ -256,7 +256,7 @@ st.markdown("---")
 
 # AI-Enhanced Analysis Section
 st.subheader("🤖 AI-Enhanced Analysis")
-with st.expander("OpenAI Integration (Optional)", expanded=False):
+with st.expander("OpenAI Integration (Optional)", expanded=True):
     st.markdown("**Enhance your code analysis with AI-powered insights**")
 
     openai_key = st.text_input(
